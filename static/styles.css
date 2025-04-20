@@ -33,3 +33,32 @@ body {
 .btn-outline-secondary, .btn-outline-danger {
     width: auto;
 }
+/* Chart container */
+.card-body {
+    position: relative;
+    min-height: 300px;
+}
+
+/* Product images in table */
+.table img {
+    max-height: 50px;
+}
+
+/* Loading message */
+#chartPlaceholder {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    z-index: 10;
+}
+
+/* Form inputs */
+#url-inputs .input-group {
+    margin-bottom: 8px;
+}
