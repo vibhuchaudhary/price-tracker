@@ -18,11 +18,31 @@ def save_price(url, title, price, source):
         c.execute("INSERT INTO price_history (url, title, price, source) VALUES (?, ?, ?, ?)",
                   (url, title, price, source))
 
-def get_price_history(url):
+def get_price_history(url, days=None):
     with sqlite3.connect("prices.db") as conn:
+        conn.row_factory = sqlite3.Row
         c = conn.cursor()
-        c.execute("SELECT timestamp, price FROM price_history WHERE url=? ORDER BY timestamp ASC", (url,))
+        
+        query = """
+            SELECT 
+                strftime('%Y-%m-%d', timestamp) as date,
+                price 
+            FROM price_history 
+            WHERE url=?
+        """
+        
+        params = [url]
+        
+        if days:
+            query += " AND date(timestamp) >= date('now', ?)"
+            params.append(f'-{days} days')
+        
+        query += " ORDER BY timestamp ASC"
+        
+        c.execute(query, params)
         data = c.fetchall()
-    dates = [row[0] for row in data]
-    prices = [row[1] for row in data]
+        
+    dates = [row['date'] for row in data]
+    prices = [row['price'] for row in data]
+    
     return dates, prices
