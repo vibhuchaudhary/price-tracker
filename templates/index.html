@@ -1,69 +1,187 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Compare Amazon & Flipkart Products</title>
-    <style>
-        table {
-            border-collapse: collapse;
-            width: 100%;
-        }
-        th, td {
-            border: 1px solid black;
-            padding: 8px;
-            vertical-align: top;
-            text-align: left;
-        }
-        input[type="text"] {
-            width: 400px;
-        }
-    </style>
-</head>
-<body>
-    <h2>Compare Amazon & Flipkart Products</h2>
-    <form method="POST">
-        <div id="input-container">
-            <input type="text" name="product_url" placeholder="https://www.amazon.in/... or https://www.flipkart.com/..." required>
-        </div>
-        <button type="button" onclick="addInput()">+ Add Another Product</button>
-        <button type="submit">Compare Products</button>
-    </form>
-    <br><hr><br>
-    {% if products %}
-        <table>
-            <tr>
-                <th>Source</th>
-                <th>Image</th>
-                <th>Product Name</th>
-                <th>Price</th>
-                <th>Rating</th>
-            </tr>
-            {% for product in products %}
-            <tr>
-                <td>{{ product.source }}</td>
-                <td>
-                    {% if product.image %}
-                        <img src="{{ product.image }}" alt="Product Image" width="100">
-                    {% else %}
-                        No Image
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <h2>Track Product Prices</h2>
+        <form method="POST" id="tracker-form">
+            <div class="mb-3" id="url-inputs">
+                <div class="input-group mb-2">
+                    <input type="url" class="form-control" name="product_url" placeholder="Enter Amazon or Flipkart product URL" required>
+                    <button type="button" class="btn btn-outline-secondary" onclick="addMoreInputs()">+ Add More</button>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Track Prices</button>
+        </form>
+
+        {% if products %}
+            <div class="mt-4">
+                <h3>Product Details</h3>
+                <div class="row" id="product-cards">
+                    {% for product in products %}
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100">
+                            {% if product.image %}
+                            <img src="{{ product.image }}" class="card-img-top product-image" alt="{{ product.title }}">
+                            {% endif %}
+                            <div class="card-body">
+                                <h5 class="card-title">{{ product.title }}</h5>
+                                <p class="card-text">
+                                    <strong>Price:</strong> ₹{{ product.price }}<br>
+                                    <strong>Rating:</strong> {{ product.rating }}<br>
+                                    <strong>Source:</strong> {{ product.source }}
+                                </p>
+                                <a href="{{ product.url }}" target="_blank" class="btn btn-sm btn-outline-primary">View Product</a>
+                                <button onclick="fetchPriceHistory('{{ product.url }}')" class="btn btn-sm btn-outline-info">Show History</button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <div id="chart-container" 
+     data-dates="{{ dates | tojson | safe }}"
+     data-prices="{{ prices | tojson | safe }}"></div>
+     
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">Price History</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="priceChart"></canvas>
+                <div id="chartPlaceholder" class="text-muted text-center py-4">
+                    {% if not (dates and prices) %}
+                    <p>No price history to display</p>
+                    <p>Track a product to see its price history</p>
                     {% endif %}
-                </td>
-                <td>{{ product.title }}</td>
-                <td>{{ product.price }}</td>
-                <td>{{ product.rating }}</td>
-            </tr>
-            {% endfor %}
-        </table>
-    {% endif %}
-    <script>
-        function addInput() {
-            const inputContainer = document.getElementById("input-container");
-            const input = document.createElement("input");
-            input.type = "text";
-            input.name = "product_url";
-            input.placeholder = "https://www.amazon.in/... or https://www.flipkart.com/...";
-            inputContainer.appendChild(document.createElement("br"));
-            inputContainer.appendChild(input);
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Add more URL input fields
+    function addMoreInputs() {
+        const container = document.getElementById('url-inputs');
+        const newInput = document.createElement('div');
+        newInput.className = 'input-group mb-2';
+        newInput.innerHTML = `
+            <input type="url" class="form-control" name="product_url" placeholder="Enter another product URL">
+            <button type="button" class="btn btn-outline-danger" onclick="this.parentElement.remove()">Remove</button>
+        `;
+        container.appendChild(newInput);
+    }
+
+    // Price chart variable
+    let priceChart = null;
+
+    // Initialize chart if we have price history data
+    document.addEventListener('DOMContentLoaded', function() {
+    const container = document.getElementById('chart-container');
+    if (container) {
+        try {
+            const dates = JSON.parse(container.dataset.dates);
+            const prices = JSON.parse(container.dataset.prices);
+            if (dates && prices) {
+                renderPriceChart(dates, prices);
+            }
+        } catch (e) {
+            console.error('Error loading chart data:', e);
         }
-    </script>
-</body>
-</html>
+    }
+});
+
+    // Function to render or update the price chart
+    function renderPriceChart(dates, prices) {
+        const ctx = document.getElementById('priceChart').getContext('2d');
+        const placeholder = document.getElementById('chartPlaceholder');
+        
+        // Hide placeholder when showing chart
+        if (placeholder) placeholder.style.display = 'none';
+        
+        // Destroy previous chart if it exists
+        if (priceChart) {
+            priceChart.destroy();
+        }
+        
+        priceChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: dates,
+                datasets: [{
+                    label: 'Price History (₹)',
+                    data: prices,
+                    borderColor: 'rgb(75, 192, 192)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    tension: 0.1,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return '₹' + context.parsed.y;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        ticks: {
+                            callback: function(value) {
+                                return '₹' + value;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Function to fetch price history via AJAX
+    function fetchPriceHistory(url) {
+        fetch('/price-history?url=' + encodeURIComponent(url))
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.json();
+            })
+            .then(data => {
+                if (data.dates && data.prices) {
+                    renderPriceChart(data.dates, data.prices);
+                } else {
+                    showChartError("No historical data available");
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching price history:', error);
+                showChartError("Failed to load price history");
+            });
+    }
+
+    function showChartError(message) {
+        const placeholder = document.getElementById('chartPlaceholder');
+        if (placeholder) {
+            placeholder.innerHTML = `<p class="text-danger">${message}</p>`;
+            placeholder.style.display = 'block';
+        }
+        if (priceChart) {
+            priceChart.destroy();
+            priceChart = null;
+        }
+    }
+</script>
+{% endblock %}
