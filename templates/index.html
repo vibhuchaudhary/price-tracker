@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Compare Amazon & Flipkart Products</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            vertical-align: top;
+            text-align: left;
+        }
+        input[type="text"] {
+            width: 400px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Compare Amazon & Flipkart Products</h2>
+    <form method="POST">
+        <div id="input-container">
+            <input type="text" name="product_url" placeholder="https://www.amazon.in/... or https://www.flipkart.com/..." required>
+        </div>
+        <button type="button" onclick="addInput()">+ Add Another Product</button>
+        <button type="submit">Compare Products</button>
+    </form>
+    <br><hr><br>
+    {% if products %}
+        <table>
+            <tr>
+                <th>Source</th>
+                <th>Image</th>
+                <th>Product Name</th>
+                <th>Price</th>
+                <th>Rating</th>
+            </tr>
+            {% for product in products %}
+            <tr>
+                <td>{{ product.source }}</td>
+                <td>
+                    {% if product.image %}
+                        <img src="{{ product.image }}" alt="Product Image" width="100">
+                    {% else %}
+                        No Image
+                    {% endif %}
+                </td>
+                <td>{{ product.title }}</td>
+                <td>{{ product.price }}</td>
+                <td>{{ product.rating }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% endif %}
+    <script>
+        function addInput() {
+            const inputContainer = document.getElementById("input-container");
+            const input = document.createElement("input");
+            input.type = "text";
+            input.name = "product_url";
+            input.placeholder = "https://www.amazon.in/... or https://www.flipkart.com/...";
+            inputContainer.appendChild(document.createElement("br"));
+            inputContainer.appendChild(input);
+        }
+    </script>
+</body>
+</html>
