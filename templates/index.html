@@ -15,50 +15,55 @@
         </form>
 
         {% if products %}
-            <div class="mt-4">
-                <h3>Product Details</h3>
-                <div class="row" id="product-cards">
-                    {% for product in products %}
-                    <div class="col-md-6 mb-4">
-                        <div class="card h-100">
-                            {% if product.image %}
-                            <img src="{{ product.image }}" class="card-img-top product-image" alt="{{ product.title }}">
-                            {% endif %}
-                            <div class="card-body">
-                                <h5 class="card-title">{{ product.title }}</h5>
-                                <p class="card-text">
-                                    <strong>Price:</strong> ₹{{ product.price }}<br>
-                                    <strong>Rating:</strong> {{ product.rating }}<br>
-                                    <strong>Source:</strong> {{ product.source }}
-                                </p>
-                                <a href="{{ product.url }}" target="_blank" class="btn btn-sm btn-outline-primary">View Product</a>
-                                <button onclick="fetchPriceHistory('{{ product.url }}')" class="btn btn-sm btn-outline-info">Show History</button>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
+        <div class="mt-4">
+            <h3>Product Details</h3>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Current Price</th>
+                            <th>History</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in products %}
+                        {% for product in products %}
+                        <tr>
+                            <td>{{ product.title }}</td>
+                            <td>
+                                <button class="btn btn-sm btn-info view-history"
+                                        data-url="{{ product.url }}"
+                                        data-title="{{ product.title }}">
+                                    View History
+                                </button>
+                            </td>
+                        </tr>
+{% endfor %}
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
+        </div>
         {% endif %}
     </div>
 
-    <div id="chart-container" 
-     data-dates="{{ dates | tojson | safe }}"
-     data-prices="{{ prices | tojson | safe }}"></div>
-     
     <div class="col-md-4">
         <div class="card">
-            <div class="card-header">
-                <h5 class="card-title">Price History</h5>
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Price History</h5>
+                <div class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#" onclick="changeTimeRange(7); return false;">Last 7 days</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="changeTimeRange(30); return false;">Last 30 days</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="changeTimeRange(90); return false;">Last 3 months</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="changeTimeRange(365); return false;">Last year</a></li>
+                </div>
             </div>
             <div class="card-body">
-                <canvas id="priceChart"></canvas>
-                <div id="chartPlaceholder" class="text-muted text-center py-4">
-                    {% if not (dates and prices) %}
-                    <p>No price history to display</p>
-                    <p>Track a product to see its price history</p>
-                    {% endif %}
+                <div id="chartPlaceholder" class="text-center py-4">
+                    <p>Select a product to view its price history</p>
                 </div>
+                <canvas id="priceChart" style="display: none;"></canvas>
             </div>
         </div>
     </div>
@@ -67,6 +72,12 @@
 
 {% block scripts %}
 <script>
+    // Global variables to store chart data
+    let currentUrl = null;
+    let allDates = [];
+    let allPrices = [];
+    let priceChart = null;
+
     // Add more URL input fields
     function addMoreInputs() {
         const container = document.getElementById('url-inputs');
@@ -79,47 +90,50 @@
         container.appendChild(newInput);
     }
 
-    // Price chart variable
-    let priceChart = null;
-
-    // Initialize chart if we have price history data
-    document.addEventListener('DOMContentLoaded', function() {
-    const container = document.getElementById('chart-container');
-    if (container) {
-        try {
-            const dates = JSON.parse(container.dataset.dates);
-            const prices = JSON.parse(container.dataset.prices);
-            if (dates && prices) {
-                renderPriceChart(dates, prices);
-            }
-        } catch (e) {
-            console.error('Error loading chart data:', e);
-        }
+    // Show message in chart area
+    function showChartMessage(message) {
+        const placeholder = document.getElementById('chartPlaceholder');
+        placeholder.innerHTML = `<p>${message}</p>`;
+        placeholder.style.display = 'block';
+        document.getElementById('priceChart').style.display = 'none';
     }
+
+    // Load price history data
+    function loadPriceHistory(url, title) {
+    console.log("Loading:", url, title);
+    // Your existing chart loading code
+}
+
+// Initialize event listeners
+document.querySelectorAll('.view-history').forEach(btn => {
+    btn.addEventListener('click', function() {
+        loadPriceHistory(this.dataset.url, this.dataset.title);
+    });
 });
 
-    // Function to render or update the price chart
-    function renderPriceChart(dates, prices) {
-        const ctx = document.getElementById('priceChart').getContext('2d');
-        const placeholder = document.getElementById('chartPlaceholder');
+    // Render the chart
+    function renderChart(dates, prices, title) {
+        const ctx = document.getElementById('priceChart');
         
-        // Hide placeholder when showing chart
-        if (placeholder) placeholder.style.display = 'none';
-        
-        // Destroy previous chart if it exists
+        // Destroy previous chart if exists
         if (priceChart) {
             priceChart.destroy();
         }
+        
+        // Hide placeholder and show chart
+        document.getElementById('chartPlaceholder').style.display = 'none';
+        ctx.style.display = 'block';
         
         priceChart = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: dates,
                 datasets: [{
-                    label: 'Price History (₹)',
+                    label: `Price History - ${title}`,
                     data: prices,
-                    borderColor: 'rgb(75, 192, 192)',
+                    borderColor: '#4bc0c0',
                     backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderWidth: 2,
                     tension: 0.1,
                     fill: true
                 }]
@@ -127,9 +141,6 @@
             options: {
                 responsive: true,
                 plugins: {
-                    legend: {
-                        position: 'top',
-                    },
                     tooltip: {
                         callbacks: {
                             label: function(context) {
@@ -140,7 +151,6 @@
                 },
                 scales: {
                     y: {
-                        beginAtZero: false,
                         ticks: {
                             callback: function(value) {
                                 return '₹' + value;
@@ -152,36 +162,31 @@
         });
     }
 
-    // Function to fetch price history via AJAX
-    function fetchPriceHistory(url) {
-        fetch('/price-history?url=' + encodeURIComponent(url))
-            .then(response => {
-                if (!response.ok) throw new Error('Network response was not ok');
-                return response.json();
-            })
-            .then(data => {
-                if (data.dates && data.prices) {
-                    renderPriceChart(data.dates, data.prices);
-                } else {
-                    showChartError("No historical data available");
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching price history:', error);
-                showChartError("Failed to load price history");
-            });
-    }
-
-    function showChartError(message) {
-        const placeholder = document.getElementById('chartPlaceholder');
-        if (placeholder) {
-            placeholder.innerHTML = `<p class="text-danger">${message}</p>`;
-            placeholder.style.display = 'block';
+    // Change time range filter
+    function changeTimeRange(days) {
+        if (!currentUrl || allDates.length === 0) return;
+        
+        const cutoffDate = new Date();
+        cutoffDate.setDate(cutoffDate.getDate() - days);
+        
+        const filteredData = allDates.map((date, index) => {
+            return { date, price: allPrices[index] };
+        }).filter(item => {
+            const itemDate = new Date(item.date);
+            return itemDate >= cutoffDate;
+        });
+        
+        if (filteredData.length === 0) {
+            showChartMessage("No data available for selected time range");
+            return;
         }
-        if (priceChart) {
-            priceChart.destroy();
-            priceChart = null;
-        }
+        
+        const filteredDates = filteredData.map(item => item.date);
+        const filteredPrices = filteredData.map(item => item.price);
+        
+        priceChart.data.labels = filteredDates;
+        priceChart.data.datasets[0].data = filteredPrices;
+        priceChart.update();
     }
 </script>
 {% endblock %}
