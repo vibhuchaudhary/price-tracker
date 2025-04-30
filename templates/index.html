@@ -1,161 +1,210 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8">
-  <title>Price Comparator</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    body {
-      background: #f4f6f9;
-    }
-    .card {
-      border-radius: 16px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.05);
-    }
-    .header {
-      font-weight: 700;
-      font-size: 2rem;
-      margin-bottom: 1.5rem;
-    }
-    .logo {
-      font-weight: 800;
-      font-size: 1.5rem;
-      color: #5e60ce;
-    }
-    .discount {
-      color: #ff4d4d;
-    }
-    .mrp {
-      text-decoration: line-through;
-      color: #777;
-    }
-    .amazon-badge {
-      color: #ff9900; /* Amazon orange */
-      font-weight: bold;
-    }
-    .flipkart-badge {
-      color: #2874f0; /* Flipkart blue */
-      font-weight: bold;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>Price Comparator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: #f4f6f9;
+        }
+
+        .card {
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+        }
+
+        .header {
+            font-weight: 700;
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .logo {
+            font-weight: 800;
+            font-size: 1.5rem;
+            color: #5e60ce;
+        }
+
+        .discount {
+            color: #ff4d4d;
+        }
+
+        .mrp {
+            text-decoration: line-through;
+            color: #777;
+        }
+
+        .amazon-badge {
+            color: #ff9900;
+            /* Amazon orange */
+            font-weight: bold;
+        }
+
+        .flipkart-badge {
+            color: #2874f0;
+            /* Flipkart blue */
+            font-weight: bold;
+        }
+
+        .alert-fixed {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 1050;
+        }
+    </style>
 </head>
 
 <body>
-  <div class="container py-5">
-    <div class="text-center mb-5">
-      <div class="logo">🛒 Price Comparator</div>
-      <p class="text-muted">Compare Amazon and Flipkart product details OR Search a Flipkart/Amazon Category!</p>
+    <div class="container py-5">
+        <div class="text-center mb-5">
+            <div class="logo">🛒 Price Comparator</div>
+            <p class="text-muted">Compare Amazon and Flipkart product details OR Search a Flipkart/Amazon Category!</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="alert-fixed">
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        <div class="mb-5">
+            <h4>🔄 Compare Two Products</h4>
+            <form method="POST" class="row g-3">
+                <div class="col-md-6">
+                    <input type="text" class="form-control" name="amazon_url" placeholder="Enter Amazon Product URL">
+                </div>
+                <div class="col-md-6">
+                    <input type="text" class="form-control" name="flipkart_url" placeholder="Enter Flipkart Product URL">
+                </div>
+                <div class="col-12 text-center">
+                    <button type="submit" class="btn btn-primary px-5">Compare</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="mb-5">
+            <h4>🔎 Search Category</h4>
+            <form method="POST" class="row g-3">
+                <div class="col-md-6">
+                    <input type="text" class="form-control" name="category_name"
+                        placeholder="Enter Category Name (e.g., phones, laptops)" required>
+                </div>
+                <div class="col-md-3">
+                    <input type="number" class="form-control" name="num_results"
+                        placeholder="Number of Results (default 5)">
+                </div>
+                <div class="col-md-3">
+                    <select class="form-control" name="find_lowest">
+                        <option value="no">Find Lowest Price? (No)</option>
+                        <option value="yes">Yes</option>
+                    </select>
+                </div>
+                <div class="col-12 text-center">
+                    <button type="submit" class="btn btn-secondary px-5">Search Category</button>
+                </div>
+            </form>
+        </div>
+
+        {% if amazon and flipkart %}
+        <h2 class="mt-5">Comparison Results</h2>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card p-4">
+                    <h4><span class="amazon-badge">🟠 Amazon</span> - {{ amazon.name }}</h4>
+                    <p>Price: <span class="discount">{{ amazon.price }}</span></p>
+                    <p>Availability: {{ amazon.availability }}</p>
+                    <p>Category: {{ amazon.category }}</p>
+                    <a href="{{ amazon.url }}" target="_blank" class="btn btn-sm btn-primary">View on Amazon</a>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card p-4">
+                    <h4><span class="flipkart-badge">🔵 Flipkart</span> - {{ flipkart.name }}</h4>
+                    <p>Price: <span class="discount">{{ flipkart.price }}</span></p>
+                    <p>Discount: {{ flipkart.discount }}</p>
+                    <p>Availability: {{ flipkart.availability }}</p>
+                    <a href="{{ flipkart.url }}" target="_blank" class="btn btn-sm btn-primary">View on Flipkart</a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if category_results_flipkart or category_results_amazon %}
+        <h2 class="mt-5">Category Search Results</h2>
+        <p class="text-muted">
+            Showing results for category: <b>{{ request.form.category_name }}</b>
+        </p>
+        <div class="row">
+            {% if category_results_flipkart %}
+            <div class="col-md-6">
+                <h4><span class="flipkart-badge">🔵 Flipkart</span></h4>
+                {% for product in category_results_flipkart %}
+                <div class="card p-3 mb-3">
+                    <h5>{{ product.title }}</h5>
+                    <p>Price: ₹{{ product.price if product.price else 'Not Available' }}</p>
+                    <p><a href="{{ product.link }}" target="_blank" class="btn btn-sm btn-primary">View Product</a></p>
+                    <form action="{{ url_for('add_to_wishlist_route') }}" method="post">
+                        <input type="hidden" name="title" value="{{ product.title }}">
+                        <input type="hidden" name="price" value="{{ product.price if product.price else 'N/A' }}">
+                        <input type="hidden" name="link" value="{{ product.link }}">
+                        <button type="submit" class="btn btn-sm btn-outline-success mt-2">Add to Wishlist</button>
+                    </form>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% if category_results_amazon %}
+            <div class="col-md-6">
+                <h4><span class="amazon-badge">🟠 Amazon</span></h4>
+                {% for product in category_results_amazon %}
+                <div class="card p-3 mb-3">
+                    <h5>{{ product.title }}</h5>
+                    <p>Price: ₹{{ product.price if product.price else 'Not Available' }}</p>
+                    <p><a href="{{ product.link }}" target="_blank" class="btn btn-sm btn-primary">View Product</a></p>
+                     <form action="{{ url_for('add_to_wishlist_route') }}" method="post">
+                        <input type="hidden" name="title" value="{{ product.title }}">
+                        <input type="hidden" name="price" value="{{ product.price if product.price else 'N/A' }}">
+                        <input type="hidden" name="link" value="{{ product.link }}">
+                        <button type="submit" class="btn btn-sm btn-outline-success mt-2">Add to Wishlist</button>
+                    </form>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if lowest_price_product %}
+        <div class="row">
+            <h4 class="mt-5 text-success">🏆 Lowest Price Product Across Categories</h4>
+            <div class="col-md-6 offset-md-3">
+                <div class="card p-4 text-center">
+                    {% for product in lowest_price_product %}
+                    <h5>{{ product.title }}</h5>
+                    <p>Price: ₹{{ product.price }}</p>
+                    <a href="{{ product.link }}" target="_blank" class="btn btn-sm btn-success">View Product</a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="text-center mt-5">
+            <a href="{{ url_for('view_wishlist') }}" class="btn btn-info">View Wishlist</a>
+        </div>
     </div>
 
-    <div class="mb-5">
-      <h4>🔄 Compare Two Products</h4>
-      <form method="POST" class="row g-3">
-        <div class="col-md-6">
-          <input type="text" class="form-control" name="amazon_url" placeholder="Enter Amazon Product URL">
-        </div>
-        <div class="col-md-6">
-          <input type="text" class="form-control" name="flipkart_url" placeholder="Enter Flipkart Product URL">
-        </div>
-        <div class="col-12 text-center">
-          <button type="submit" class="btn btn-primary px-5">Compare</button>
-        </div>
-      </form>
-    </div>
-
-    <div class="mb-5">
-      <h4>🔎 Search Category</h4>
-      <form method="POST" class="row g-3">
-        <div class="col-md-6">
-          <input type="text" class="form-control" name="category_name" placeholder="Enter Category Name (e.g. phones, laptops)" required>
-        </div>
-        <div class="col-md-3">
-          <input type="number" class="form-control" name="num_results" placeholder="Number of Results (default 5)">
-        </div>
-        <div class="col-md-3">
-          <select class="form-control" name="find_lowest">
-            <option value="no">Find Lowest Price? (No)</option>
-            <option value="yes">Yes</option>
-          </select>
-        </div>
-        <div class="col-12 text-center">
-          <button type="submit" class="btn btn-success px-5">Search</button>
-        </div>
-      </form>
-    </div>
-
-    <div class="row">
-      {% if amazon %}
-      <div class="col-md-6 mb-4">
-        <div class="card p-4">
-          <h4 class="text-orange">🟠 Amazon</h4>
-          <p><strong>Name:</strong> {{ amazon.name }}</p>
-          <p><strong>Price:</strong> ₹{{ amazon.price if amazon.price else 'Not Available' }}</p>
-          <p><strong>Availability:</strong> {{ amazon.availability }}</p>
-          <p><a href="{{ amazon.url }}" target="_blank">View on Amazon</a></p>
-        </div>
-      </div>
-      {% endif %}
-
-      {% if flipkart %}
-      <div class="col-md-6 mb-4">
-        <div class="card p-4">
-          <h4 class="text-primary">🔵 Flipkart</h4>
-          <p><strong>Name:</strong> {{ flipkart.name }}</p>
-          <p><strong>Price:</strong> ₹{{ flipkart.price if flipkart.price else 'Not Available' }}</p>
-          <p><strong>Discount:</strong> <span class="discount">{{ flipkart.discount }}</span></p>
-          <p><strong>MRP:</strong> <span class="mrp">{{ flipkart.mrp }}</span></p>
-          <p><strong>Availability:</strong> {{ flipkart.availability }}</p>
-          <p><a href="{{ flipkart.url }}" target="_blank">View on Flipkart</a></p>
-        </div>
-      </div>
-      {% endif %}
-    </div>
-
-    {% if category_results_flipkart %}
-    <div class="row">
-      <h4 class="mt-5"><span class="flipkart-badge">🔵 Flipkart</span> - Top Products in Category</h4>
-      {% for product in category_results_flipkart %}
-      <div class="col-md-4 mb-4">
-        <div class="card p-3">
-          <h5>{{ product.title }}</h5>
-          <p><strong>Price:</strong> ₹{{ product.price if product.price else 'Not Available' }}</p>
-          <p><a href="{{ product.link }}" target="_blank">View Product</a></p>
-        </div>
-      </div>
-      {% endfor %}
-    </div>
-    {% endif %}
-
-    {% if category_results_amazon %}
-    <div class="row">
-      <h4 class="mt-5"><span class="amazon-badge">🟠 Amazon</span> - Top Products in Category</h4>
-      {% for product in category_results_amazon %}
-      <div class="col-md-4 mb-4">
-        <div class="card p-3">
-          <h5>{{ product.title }}</h5>
-          <p><strong>Price:</strong> ₹{{ product.price if product.price else 'Not Available' }}</p>
-          <p><a href="{{ product.link }}" target="_blank">View Product</a></p>
-        </div>
-      </div>
-      {% endfor %}
-    </div>
-    {% endif %}
-
-    {% if lowest_price_product %}
-    <div class="row">
-      <h4 class="mt-5 text-success">🏆 Lowest Price Product Across Categories</h4>
-      <div class="col-md-6 offset-md-3">
-        <div class="card p-4 text-center">
-          {% for product in lowest_price_product %}
-          <h5>{{ product.title }}</h5>
-          <p><strong>Price:</strong> ₹{{ product.price }}</p>
-          <p><a href="{{ product.link }}" target="_blank">View Product</a></p>
-          {% endfor %}
-        </div>
-      </div>
-    </div>
-    {% endif %}
-
-  </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>
