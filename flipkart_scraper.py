@@ -1,7 +1,6 @@
 import ssl
-import re
 from urllib.request import Request, urlopen
-from urllib.error   import HTTPError, URLError
+from urllib.error import HTTPError, URLError
 from bs4 import BeautifulSoup
 
 def scrape_flipkart_product(url):
@@ -29,20 +28,27 @@ def scrape_flipkart_product(url):
 
     soup = BeautifulSoup(resp.read(), "html.parser")
 
+    # Get product name
     title_tag = soup.select_one("h1._6EBuvT span.VU-ZEz")
     name = title_tag.get_text(strip=True) if title_tag else "N/A"
 
+    # Get product price
     price_tag = soup.select_one("div.Nx9bqj.CxhGGd")
     price = price_tag.get_text(strip=True) if price_tag else "N/A"
 
-    cat_tags = soup.select("a.R0cyWM")
-    if cat_tags and len(cat_tags) > 1:
-        category = " > ".join(tag.get_text(strip=True) for tag in cat_tags[1:])
-    else:
-        category = "N/A"
+    # Get discount information (e.g., 11% off)
+    discount_tag = soup.select_one("div.UkUFwK.WW8yVX span")
+    discount = discount_tag.get_text(strip=True) if discount_tag else "No discount"
+    
+    # Get product availability (checking for text like 'In stock' or 'Out of stock')
+    availability_tag = soup.select_one("div._2Jq5E4")
+    availability = availability_tag.get_text(strip=True) if availability_tag else "Availability info not available"
 
+    # Return the desired format to match the Amazon scraper's output
     return {
-        "Product Name": name,
-        "Price": price,
-        "Category": category
+        "name": name,
+        "price": price,
+        "discount": discount,
+        "availability": availability,
+        "url": url  # Pass the URL so the Flask app can link to the product page
     }
