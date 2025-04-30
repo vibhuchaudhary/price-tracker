@@ -1,7 +1,12 @@
 import requests
 from bs4 import BeautifulSoup
+import logging
 
-def scrape_amazon_organic_listings_extended_lowest(search_keyword):
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+
+def scrape_amazon_category(search_keyword):
     """
     Retrieves all organic product listings from an Amazon search results page
     based on the search keyword and then identifies the entry with the lowest price.
@@ -25,12 +30,13 @@ def scrape_amazon_organic_listings_extended_lowest(search_keyword):
     }
     try:
         response = requests.get(search_url, headers=headers)
-        response.raise_for_status()
+        response.raise_for_status()  # Raise HTTPError for bad responses
         soup = BeautifulSoup(response.content, 'html.parser')
         listings = soup.find_all('div', {'data-component-type': 's-search-result'})
         all_products = []
 
         for listing in listings:
+            # Skip sponsored products
             if listing.find('span', class_='sponsored-label-text'):
                 continue
 
@@ -47,44 +53,59 @@ def scrape_amazon_organic_listings_extended_lowest(search_keyword):
             if title and price_whole and link:
                 price_str = f"{price_whole}.{price_fraction}"
                 try:
-                    price_value = float(price_str.replace(',', '')) # Remove comma if present
-                    all_products.append({
+                    price_value = float(price_str.replace(',', ''))  # Remove comma if present
+                    product = {
                         'title': title,
                         'price': price_str,
-                        'price_value': price_value, # Store numerical price for comparison
+                        'price_value': price_value,  # Store numerical price for comparison
                         'link': link
-                    })
+                    }
+                    all_products.append(product)
                 except ValueError:
-                    print(f"Could not parse price: {price_str} for '{title}'. Skipping price comparison for this item.")
-                    all_products.append({
+                    logging.warning(f"Could not parse price: {price_str} for '{title}'. Skipping price comparison for this item.")
+                    product = {
                         'title': title,
                         'price': price_str,
-                        'price_value': float('inf'), # Assign infinity for comparison
+                        'price_value': float('inf'),  # Assign infinity for comparison
                         'link': link
-                    })
+                    }
+                    all_products.append(product)
+            elif title and link:
+                # If price is not available, still add the product with a default price_value
+                product = {
+                    'title': title,
+                    'price': 'N/A',
+                    'price_value': float('inf'),  # Ensure it doesn't affect lowest price
+                    'link': link
+                }
+                all_products.append(product)
 
         lowest_price_product = None
         if all_products:
-            lowest_price_product = min(all_products, key=lambda item: item['price_value'])
+            try:
+                lowest_price_product = min(all_products, key=lambda item: item['price_value'])
+            except ValueError:
+                logging.warning("Could not determine the lowest price among the entries.")
 
         return all_products, lowest_price_product
 
     except requests.exceptions.RequestException as e:
-        print(f"Error during request: {e}")
+        logging.error(f"Error during request: {e}")
         return [], None
     except Exception as e:
-        print(f"An error occurred: {e}")
+        logging.error(f"An error occurred: {e}")
         return [], None
+
 
 if __name__ == '__main__':
     search_term = input("Enter search keywords: ")
 
-    all_entries, lowest_price_entry = scrape_amazon_organic_listings_extended_lowest(search_term)
+    all_entries, lowest_price_entry = scrape_amazon_category(search_term)
 
     if all_entries:
         print(f"\nAll organic Amazon products for '{search_term}':")
         for i, item in enumerate(all_entries):
-            print(f"--- Entry {i+1} ---")
+            print(f"--- Entry {i + 1} ---")
             print(f"  Title: {item['title']}")
             print(f"  Price: ₹{item['price']}")
             print(f"  Link: {item['link']}")
