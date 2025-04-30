@@ -1,5 +1,5 @@
-from amazon_scraper import scrape_amazon_product
-from flipkart_scraper import scrape_flipkart_product
+from scrapers.amazon_scraper import scrape_amazon_product
+from scrapers.flipkart_scraper import scrape_flipkart_product
 import logging
 
 # Configure logging
