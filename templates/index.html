@@ -29,6 +29,14 @@
       text-decoration: line-through;
       color: #777;
     }
+    .amazon-badge {
+      color: #ff9900; /* Amazon orange */
+      font-weight: bold;
+    }
+    .flipkart-badge {
+      color: #2874f0; /* Flipkart blue */
+      font-weight: bold;
+    }
   </style>
 </head>
 
@@ -36,10 +44,9 @@
   <div class="container py-5">
     <div class="text-center mb-5">
       <div class="logo">🛒 Price Comparator</div>
-      <p class="text-muted">Compare Amazon and Flipkart product details OR Search a Flipkart Category!</p>
+      <p class="text-muted">Compare Amazon and Flipkart product details OR Search a Flipkart/Amazon Category!</p>
     </div>
 
-    <!-- Product Comparison Form -->
     <div class="mb-5">
       <h4>🔄 Compare Two Products</h4>
       <form method="POST" class="row g-3">
@@ -55,9 +62,8 @@
       </form>
     </div>
 
-    <!-- Flipkart Category Search Form -->
     <div class="mb-5">
-      <h4>🔎 Search Flipkart Category</h4>
+      <h4>🔎 Search Category</h4>
       <form method="POST" class="row g-3">
         <div class="col-md-6">
           <input type="text" class="form-control" name="category_name" placeholder="Enter Category Name (e.g. phones, laptops)" required>
@@ -77,7 +83,6 @@
       </form>
     </div>
 
-    <!-- Display Results -->
     <div class="row">
       {% if amazon %}
       <div class="col-md-6 mb-4">
@@ -106,31 +111,46 @@
       {% endif %}
     </div>
 
-    <!-- Category Products -->
-    {% if category_results %}
+    {% if category_results_flipkart %}
     <div class="row">
-      <h4 class="mt-5">🛍 Top Products in Category</h4>
-      {% for product in category_results %}
+      <h4 class="mt-5"><span class="flipkart-badge">🔵 Flipkart</span> - Top Products in Category</h4>
+      {% for product in category_results_flipkart %}
       <div class="col-md-4 mb-4">
         <div class="card p-3">
-          <h5>{{ product.name }}</h5>
+          <h5>{{ product.title }}</h5>
           <p><strong>Price:</strong> ₹{{ product.price if product.price else 'Not Available' }}</p>
-          <p><a href="{{ product.url }}" target="_blank">View Product</a></p>
+          <p><a href="{{ product.link }}" target="_blank">View Product</a></p>
         </div>
       </div>
       {% endfor %}
     </div>
     {% endif %}
 
-    <!-- Lowest Price Product -->
+    {% if category_results_amazon %}
+    <div class="row">
+      <h4 class="mt-5"><span class="amazon-badge">🟠 Amazon</span> - Top Products in Category</h4>
+      {% for product in category_results_amazon %}
+      <div class="col-md-4 mb-4">
+        <div class="card p-3">
+          <h5>{{ product.title }}</h5>
+          <p><strong>Price:</strong> ₹{{ product.price if product.price else 'Not Available' }}</p>
+          <p><a href="{{ product.link }}" target="_blank">View Product</a></p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
     {% if lowest_price_product %}
     <div class="row">
-      <h4 class="mt-5 text-success">🏆 Lowest Price Product</h4>
+      <h4 class="mt-5 text-success">🏆 Lowest Price Product Across Categories</h4>
       <div class="col-md-6 offset-md-3">
         <div class="card p-4 text-center">
-          <h5>{{ lowest_price_product.name }}</h5>
-          <p><strong>Price:</strong> ₹{{ lowest_price_product.price }}</p>
-          <p><a href="{{ lowest_price_product.url }}" target="_blank">View Product</a></p>
+          {% for product in lowest_price_product %}
+          <h5>{{ product.title }}</h5>
+          <p><strong>Price:</strong> ₹{{ product.price }}</p>
+          <p><a href="{{ product.link }}" target="_blank">View Product</a></p>
+          {% endfor %}
         </div>
       </div>
     </div>

@@ -30,7 +30,6 @@ def scrape_flipkart_category(category):
             if title and price and link_tag:
                 price_text = price.text.strip().replace('₹', '').replace(',', '')
                 price_value = int(price_text)
-
                 product = {
                     'title': title.text.strip(),
                     'price': price_value,
