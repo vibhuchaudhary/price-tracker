@@ -6,14 +6,11 @@ from scrapers.flipkart_scraper import scrape_flipkart_product
 from scrapers.category_page_flipkart import scrape_flipkart_category
 from scrapers.category_page_amazon import scrape_amazon_category
 
-# Initialize Flask application
 app = Flask(__name__)
-app.secret_key = "your_secret_key"  # Change this to a strong random key
+app.secret_key = "123"  
 
-# Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# Dummy wishlist (replace with a database in a real app)
 wishlist = []
 
 
@@ -33,10 +30,9 @@ def index():
         amazon_url = request.form.get("amazon_url", "").strip()
         flipkart_url = request.form.get("flipkart_url", "").strip()
         category_name = request.form.get("category_name", "").strip()
-        num_results_str = request.form.get("num_results", "5")  # Get as string first
+        num_results_str = request.form.get("num_results", "5") 
         find_lowest = request.form.get("find_lowest", "no").lower()
 
-        # Product Comparison Logic
         if amazon_url and flipkart_url:
             try:
                 amazon_data = scrape_amazon_product(amazon_url)
@@ -45,10 +41,9 @@ def index():
                 logging.error(f"Error during product comparison: {e}")
                 flash("Failed to compare products. Please check the URLs.", "danger")
 
-        # Category Search Logic
         elif category_name:
             try:
-                num_results = int(num_results_str)  # Convert to integer
+                num_results = int(num_results_str) 
             except ValueError:
                 num_results = 5
                 flash("Invalid number of results. Using default (5).", "warning")
@@ -58,28 +53,24 @@ def index():
                 flash("An error occurred while processing your request.", "danger")
 
             try:
-                # Scrape Flipkart Category
                 flipkart_category_results = scrape_flipkart_category(category_name)
                 if flipkart_category_results:
                     category_results_flipkart = flipkart_category_results[:num_results]
 
-                    # Find lowest price product in Flipkart results
                     if find_lowest == "yes":
                         valid_flipkart_products = [p for p in flipkart_category_results if p.get("price") is not None]
                         if valid_flipkart_products:
                             lowest_price_flipkart = min(valid_flipkart_products, key=lambda x: x['price'])
                             lowest_price_product = [lowest_price_flipkart]
                         else:
-                            lowest_price_product = []  # Initialize to empty list
+                            lowest_price_product = [] 
                 else:
                     flash("Could not retrieve products from Flipkart.", "warning")
 
-                # Scrape Amazon Category
                 amazon_category_results, amazon_lowest = scrape_amazon_category(category_name)
                 if amazon_category_results:
                     category_results_amazon = amazon_category_results[:num_results]
 
-                    # Compare and update lowest price product
                     if find_lowest == "yes" and amazon_lowest:
                         if lowest_price_product:
                             if amazon_lowest['price_value'] < lowest_price_product[0]['price_value']:
@@ -133,7 +124,7 @@ def remove_from_wishlist():
                 wishlist.remove(item)
                 flash(f"Removed {title} from wishlist!", "info")
                 logging.info(f"Removed '{title}' from wishlist.")
-                return redirect(url_for("view_wishlist"))  # Redirect and exit
+                return redirect(url_for("view_wishlist"))
         flash(f"{title} not found in wishlist.", "warning")
         logging.warning(f"'{title}' not found in wishlist.")
     else:
@@ -148,7 +139,6 @@ def view_wishlist():
     Displays the user's wishlist.
     """
     return render_template("wishlist.html", wishlist=wishlist)
-
 
 if __name__ == "__main__":
     app.run(debug=True)

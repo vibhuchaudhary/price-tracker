@@ -2,7 +2,6 @@ from scrapers.amazon_scraper import scrape_amazon_product
 from scrapers.flipkart_scraper import scrape_flipkart_product
 import logging
 
-# Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
@@ -19,13 +18,13 @@ def compare_prices():
         amazon_data = scrape_amazon_product(amazon_url)
     except Exception as e:
         logging.error(f"Error scraping Amazon product: {e}")
-        amazon_data = None  # Ensure amazon_data is None in case of an error
+        amazon_data = None 
 
     try:
         flipkart_data = scrape_flipkart_product(flipkart_url)
     except Exception as e:
         logging.error(f"Error scraping Flipkart product: {e}")
-        flipkart_data = None  # Ensure flipkart_data is None in case of an error
+        flipkart_data = None 
 
     print("\n========== PRICE COMPARISON ==========\n")
 
